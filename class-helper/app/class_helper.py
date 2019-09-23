@@ -235,10 +235,10 @@ class SecondWindow(QtWidgets.QMainWindow):
 
 app.setStyle("Fusion")
 app_icon = QIcon()
-app_icon.addFile('../img/toolbox.png', QSize(32, 32))
+app_icon.addFile('class-helper/img/toolbox.png', QSize(32, 32))
 app.setWindowIcon(app_icon)
 
-if Path('../settings.json').exists():
+if Path('class-helper/settings.json').exists():
     win = Window()
     win.show()
 else:

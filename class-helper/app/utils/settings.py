@@ -5,7 +5,7 @@ from threading import Thread
 
 class Settings:
     def __init__(self):
-        self.settings_path = Path('../../class-helper/settings.json')
+        self.settings_path = Path('../../settings.json')
         if self.settings_path.exists():
             self.settings = json.load(self.settings_path.open())
             self.lesson_path = Path(self.settings['lessonPath'])
