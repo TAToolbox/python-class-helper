@@ -14,7 +14,10 @@ import ctypes
 
 
 myappid = u'Class Helper'  # arbitrary string
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+if os.name == 'nt':
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+else:
+    pass
 
 app = QtWidgets.QApplication(sys.argv)
 
