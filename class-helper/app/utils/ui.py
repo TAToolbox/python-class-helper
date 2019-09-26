@@ -161,10 +161,8 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.action_Set_Lesson_Plans = QtWidgets.QAction(MainWindow)
-        self.action_Set_Lesson_Plans.setCheckable(True)
         self.action_Set_Lesson_Plans.setObjectName("action_Set_Lesson_Plans")
         self.action_Set_Class_Repo = QtWidgets.QAction(MainWindow)
-        self.action_Set_Class_Repo.setCheckable(True)
         self.action_Set_Class_Repo.setObjectName("action_Set_Class_Repo")
         self.action_Dark_Mode = QtWidgets.QAction(MainWindow)
         self.action_Dark_Mode.setCheckable(True)
@@ -236,6 +234,8 @@ class Ui_MainWindow(object):
         self.menu_Commit_Msg.setTitle(_translate("MainWindow", "&Commit Msg"))
         self.action_Set_Lesson_Plans.setText(
             _translate("MainWindow", "Set Lesson Plans"))
+        self.action_Set_Lesson_Plans.setStatusTip(_translate(
+            "MainWindow", "Set a location for the master lesson plans"))
         self.action_Set_Class_Repo.setText(
             _translate("MainWindow", "Set Class Repo"))
         self.action_Set_Class_Repo.setStatusTip(_translate(
@@ -250,3 +250,40 @@ class Ui_MainWindow(object):
         self.action00_Solved.setText(_translate("MainWindow", "00 - Solved"))
         self.action00_Lesson_name_Solved.setText(
             _translate("MainWindow", "00-Lesson_name - Solved"))
+
+
+class Dialog(object):
+    def setupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(430, 110)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(Dialog.sizePolicy().hasHeightForWidth())
+        Dialog.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setFamily("Hack")
+        Dialog.setFont(font)
+        self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
+        self.buttonBox.setGeometry(QtCore.QRect(240, 70, 161, 32))
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(
+            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
+        self.fullTime = QtWidgets.QPushButton(Dialog)
+        self.fullTime.setGeometry(QtCore.QRect(20, 75, 75, 23))
+        self.fullTime.setObjectName("fullTime")
+        self.daySelect = QtWidgets.QComboBox(Dialog)
+        self.daySelect.setGeometry(QtCore.QRect(20, 30, 381, 22))
+        self.daySelect.setObjectName("daySelect")
+
+        self.retranslateUi(Dialog)
+        self.buttonBox.accepted.connect(Dialog.accept)
+        self.buttonBox.rejected.connect(Dialog.reject)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Select Class Day"))
+        self.fullTime.setText(_translate("Dialog", "Full Time"))

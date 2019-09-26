@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, uic
 import utils
 import sys
 import subprocess
@@ -19,8 +19,6 @@ if os.name == 'nt':
 else:
     pass
 
-app = QtWidgets.QApplication(sys.argv)
-
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
@@ -29,6 +27,7 @@ class Window(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.settings = utils.Settings()
         self.load_settings = self.settings.settings
+        self.load_settings
 
         lessons = sorted(self.settings.lesson_path.expanduser().glob(
             '**/*1-Lesson-Plans'))[0]
@@ -37,11 +36,16 @@ class Window(QtWidgets.QMainWindow):
             self.ui.lessonList.addItem(lesson.stem)
         self.ui.activityList.les_dirs = lessons_dirs
 
-        if self.settings.settings['lessonPath'] is not 'None':
+        if self.settings.settings['lessonPlans'] is not 'None':
             self.ui.action_Set_Lesson_Plans.setChecked(True)
 
-        if self.settings.settings['classPath'] is not 'None':
+        if self.settings.settings['classRepo'] is not 'None':
             self.ui.action_Set_Class_Repo.setChecked(True)
+
+        self.class_repo = Path(
+            self.settings.class_path, self.settings.class_day).expanduser()
+        self.ui.activitiesDone.basePath = [
+            x for x in self.class_repo.iterdir() if x.is_dir()]
 
         self.ui.radioButton.value = '1'
         self.ui.radioButton.setChecked(True)
@@ -50,13 +54,9 @@ class Window(QtWidgets.QMainWindow):
         self.ui.radioButton_2.toggled.connect(self.radioClicked)
         self.ui.radioButton_3.value = '3'
         self.ui.radioButton_3.toggled.connect(self.radioClicked)
+        self.radioClicked()
 
         self.ui.lessonList.currentIndexChanged.connect(self.radioClicked)
-
-        self.class_repo = Path(
-            self.settings.class_path, self.settings.class_day).expanduser()
-        self.ui.activitiesDone.basePath = [
-            x for x in self.class_repo.iterdir() if x.is_dir()]
 
         self.ui.pushActivity.clicked.connect(self.pushActivity)
 
@@ -85,9 +85,14 @@ class Window(QtWidgets.QMainWindow):
 
         self.ui.setup_group.triggered.connect(self.setup_style)
 
-        # self.ui.pushActivity.clicked.connect(self.push_activity)
+        self.show()
+
+        self.ui.action_Set_Class_Repo.triggered.connect(print('test'))
 
     def radioClicked(self):
+        '''
+        Clears activity list.  Passes current lesson and day to update_activity/ignore_check.       
+        '''
         if self.ui.radioButton.isChecked():
             radioButton = self.ui.radioButton
         elif self.ui.radioButton_2.isChecked():
@@ -101,6 +106,10 @@ class Window(QtWidgets.QMainWindow):
         self.ignore_check()
 
     def update_activity(self):
+        '''
+        Joins path for current lesson/day with Lesson Plans activities directory.\n
+        Iterates over child directories and populates activity selector.
+        '''
         activity_l = self.ui.activityList
         try:
             act_path = Path(
@@ -113,6 +122,13 @@ class Window(QtWidgets.QMainWindow):
             self.error_box
 
     def ignore_check(self):
+        '''
+        Parses lesson-level .gitignore and populates combo box with commented solved activities.
+
+
+        Calculates lesson progess with a ratio of commented solved activities
+        to uncommented solved activities.
+        '''
         actDone = self.ui.activitiesDone
         cur_les = self.ui.activityList.cur_les
         cur_day = self.ui.activityList.cur_day
@@ -126,11 +142,10 @@ class Window(QtWidgets.QMainWindow):
                 for line in gitignore.read().splitlines():
                     if line.startswith(cur_day) and line.endswith('Solved'):
                         line_count += 1
-                    if line.startswith('#' + cur_day):
-                        if line.endswith('Solved'):
-                            act = line.split('/')[2]
-                            model.appendRow(QStandardItem(act))
-                            act_count += 1
+                    if line.startswith('#' + cur_day) and line.endswith('Solved'):
+                        act = line.split('/')[2]
+                        model.appendRow(QStandardItem(act))
+                        act_count += 1
             try:
                 progress = act_count/line_count * 100
             except ZeroDivisionError:
@@ -143,9 +158,14 @@ class Window(QtWidgets.QMainWindow):
             self.error_box()
 
     def pushActivity(self):
-        self.radioClicked()
+        '''
+        Currently does nothing
+        '''
+        self.ui.pushActivity.setStatusTip("Pushed this button")
+        self.ui.statusbar.update()
 
     def error_box(self):
+        '''Error dialog for missing paths'''
         error = QtWidgets.QMessageBox()
         error.setText('File path does not exist')
         error.setWindowTitle('Error')
@@ -153,34 +173,37 @@ class Window(QtWidgets.QMainWindow):
         error.exec_()
 
     def commit_msg(self):
+        '''Sets commit message value in settings'''
         active = self.ui.commit_group.checkedAction()
         print(active.text())
         self.settings.write('commitMsg', active.text())
 
     def setup_style(self):
+        '''Sets weekly setup style in settings.json'''
         active = self.ui.setup_group.checkedAction()
         print(active.text())
         self.settings.write('pushStyle', active.text())
 
     def theme_toggle(self):
+        '''Toggles theme'''
         if self.ui.action_Dark_Mode.isChecked():
             self.set_dark_mode()
         else:
             self.ui.action_Dark_Mode.setChecked(False)
             self.set_light_mode()
-        print(self.load_settings['theme'])
 
     def set_dark_mode(self):
-        print('called dark_mode')
+        '''Writes dark theme to settings.json and calls dark mode palette'''
         self.settings.write('theme', 'dark')
         self.dark_mode()
 
     def set_light_mode(self):
-        print('called light_mode')
+        '''Writes light theme to settings.json and calls light mode palette'''
         self.settings.write('theme', 'light')
         self.light_mode()
 
     def dark_mode(self):
+        '''Sets palette for dark mode'''
         darkMode = QPalette()
         darkMode.setColor(QPalette.Window, QColor(53, 53, 53))
         darkMode.setColor(QPalette.WindowText, Qt.white)
@@ -199,6 +222,7 @@ class Window(QtWidgets.QMainWindow):
         QtWidgets.qApp.setPalette(darkMode)
 
     def light_mode(self):
+        '''Sets palette for light mode'''
         lightMode = QPalette()
         lightMode.setColor(QPalette.Window, QColor(245, 245, 245))
         lightMode.setColor(QPalette.WindowText, Qt.black)
@@ -217,35 +241,67 @@ class Window(QtWidgets.QMainWindow):
         QtWidgets.qApp.setPalette(lightMode)
 
 
-class SecondWindow(QtWidgets.QMainWindow):
+class dirSelectWindow(QtWidgets.QWidget):
+
     def __init__(self):
-        super(SecondWindow, self).__init__()
+        super().__init__()
+        self.left = 600
+        self.top = 400
+        self.width = 640
+        self.height = 480
         self.settings = utils.Settings()
-        self.model = QtWidgets.QFileSystemModel()
-        home = expanduser('~')
-        self.model.setRootPath(home)
-        self.model.setFilter(QDir.AllDirs | QDir.NoDotAndDotDot)
-        self.view = QtWidgets.QTreeView()
-        self.view.setModel(self.model)
-        self.view.setWindowTitle('Choose Lesson Plans Directory')
-        self.view.setFixedSize(500, 300)
-        self.view.setRootIndex(self.model.index(home))
-        self.view.hideColumn(1)
-        self.view.hideColumn(2)
-        self.view.hideColumn(3)
-        self.view.show()
+        self.settings.settings
+        self.setupUI()
+
+    def setupUI(self):
+        self.setGeometry(self.left, self.top, self.width, self.height)
+        self.openFileNameDialog(title="Lesson Plans", repo='lessonPlans')
+        self.openFileNameDialog(title="Class Repo", repo='classRepo')
+
+    def openFileNameDialog(self, title=str, repo=str):
+        options = QtWidgets.QFileDialog.Options()
+        options |= QtWidgets.QFileDialog.DontUseNativeDialog
+        dirName = QtWidgets.QFileDialog.getExistingDirectory(
+            self, f'Select {title}', options=options)
+        if dirName:
+            self.settings.write(repo, '~/'+Path(
+                dirName).relative_to(Path().home()).as_posix())
+        if repo == 'classRepo':
+            self.class_path = Path(dirName).expanduser()
 
 
-app.setStyle("Fusion")
-app_icon = QIcon()
-app_icon.addFile('class-helper/img/toolbox.png', QSize(32, 32))
-app.setWindowIcon(app_icon)
+class daySelect(QtWidgets.QDialog):
+    def __init__(self):
+        super(daySelect, self).__init__()
+        self.ui = utils.Dialog()
+        self.ui.setupUi(self)
+        self.settings = utils.Settings()
+        self.class_repo = self.settings.class_path
 
-if Path('class-helper/settings.json').exists():
+        repo_children = [str(x.name)
+                         for x in self.class_repo.expanduser().iterdir()]
+        for item in repo_children:
+            self.ui.daySelect.addItem(item)
+
+        self.ui.fullTime.setDisabled(True)
+
+        self.ui.buttonBox.clicked.connect(self.onSelect)
+        self.exec_()
+
+    def onSelect(self):
+        self.settings.write('classDay', self.ui.daySelect.currentText())
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyle("Fusion")
+    app_icon = QIcon()
+    app_icon.addFile('class-helper/img/toolbox.png', QSize(32, 32))
+    app.setWindowIcon(app_icon)
+    if not Path('class-helper/settings.json').exists():
+        second_window = dirSelectWindow()
+        day_select = daySelect()
+
     win = Window()
-    win.show()
-else:
-    second_win = SecondWindow()
 
-
-sys.exit(app.exec())
+    sys.exit(app.exec())
