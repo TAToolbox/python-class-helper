@@ -74,7 +74,6 @@ class Window(QtWidgets.QMainWindow):
         self.ui.setup_group.triggered.connect(self.setup_style)
 
         self.ui.action_Set_Class_Repo.triggered.connect(self.select_dirs)
-        # self.ui.action_Set_Class_Repo.triggered.connect(print('test'))
 
     def select_dirs(self):
         dirSelectWindow()
@@ -152,8 +151,15 @@ class Window(QtWidgets.QMainWindow):
         '''
         Currently does nothing
         '''
-        self.ui.pushActivity.setStatusTip("Pushed this button")
-        self.ui.statusbar.update()
+        self.radioClicked()
+        lesson = self.ui.lessonList.currentText()
+        print(lesson)
+        day = self.ui.activityList.cur_day
+        print(day)
+        setup = Setup(lesson)
+        setup.ignore_act(day, self.ui.activityList.currentText())
+        QtWidgets.qApp.processEvents()
+        self.ui.lessonProgress.update()
 
     def error_box(self):
         '''Error dialog for missing paths'''

@@ -118,10 +118,11 @@ class Setup:
         git = repo.git
         ssh_cmd = 'ssh -i id_rsa'
         with git.custom_environment(GIT_SSH_COMMAND=ssh_cmd):
-            git.pull()
+            # git.pull()
             git.add('-A')
             git.commit('-m', commit_msg)
-            git.push('origin', 'master')
+            # git.push('origin', 'master')
+            ''' @Todo: tie logger into data text for Window()'''
 
 
 class Settings:
@@ -489,4 +490,4 @@ class Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Select Class Day"))
-        self.fullTime.setText(_translate("Dialog", "Full Time"))
+        self.fullTime.setText(_translate("Dialog", "One Class"))

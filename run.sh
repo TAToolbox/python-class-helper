@@ -1,5 +1,6 @@
 #!/bin/bash
 
+`$(source deactivate)`
 
 os=$OSTYPE
 if [[ "$os" == "linux-gnu" ]]; then
