@@ -1,4 +1,208 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from pathlib import Path, PurePosixPath
+from shutil import copytree, ignore_patterns
+import json
+import subprocess
+from git import Repo
+# import threading
+# from concurrent.futures import ProcessPoolExecutor, as_completed
+
+
+class Setup:
+    '''Copies lesson from lesson plans to class repo, sets up weekly gitignore and activity commit/push'''
+
+    def __init__(self, lesson=str):
+        self.settings = Settings()
+        self.lesson = lesson
+
+        self.full_lesson = self.settings.lesson_path / '01-Lesson-Plans' / self.lesson
+        self.full_class = self.settings.class_path / \
+            self.settings.class_day / self.lesson
+        # Save yourself
+        self.ignore = ignore_patterns('TimeTracker*', 'LessonPlan.md',
+                                      'VideoGuide.md', '*eslintrc.json')
+        self.ignore_path = Path(self.full_class, '.gitignore').expanduser()
+
+    def saveyourself(self):
+        '''Removes lesson level README.md as it contains homework walkthrough'''
+        try:
+            top_readme = self.settings.class_path / self.lesson / 'README.md'
+            top_readme.expanduser().unlink()
+        except FileNotFoundError:
+            pass
+
+    def copy(self):
+        try:
+            copytree(self.full_lesson.expanduser().as_posix(),
+                     self.full_class.expanduser().as_posix(), ignore=self.ignore)
+            self.saveyourself()
+            self.init_ignore()
+        except FileExistsError:
+            print(
+                f"{self.lesson} already exists in {str(self.settings.class_path.expanduser())}")
+            pass
+
+    def homework(self):
+        lp_homework = self.settings.lesson_path / \
+            '02-Homework' / self.lesson / 'Instructions'
+        cl_homework = self.settings.class_path / 'Homework' / self.lesson
+        hw_ignore = ignore_patterns('Solutions', '*eslintrc.json')
+
+        try:
+            copytree(lp_homework.expanduser().as_posix(),
+                     cl_homework.expanduser().as_posix(), ignore=hw_ignore)
+        except FileExistsError:
+            print(f"{self.lesson} Homework already exists")
+
+    def init_ignore(self):
+        self.ignore_path.touch()
+        solved = self.full_class.expanduser().glob('**/Solved')
+        all_act = self.full_class.expanduser().glob('**/*solved')
+        day = '1'
+        with self.ignore_path.open(mode='w', encoding='utf-8', newline='\n') as ignore:
+            ignore.write('# Class 1\n')
+            if self.settings.push_style == 'All Unsolved':
+                for line in solved:
+                    activity = line.relative_to(
+                        self.full_class.expanduser())
+                    ignore.write('\n')
+                    if not str(activity).startswith(day):
+                        day = str(activity.as_posix()).split("/")[0]
+                        ignore.write(f'\n# Class {day}\n\n')
+                    ignore.write(activity.as_posix())
+            else:
+                for line in all_act:
+                    activity = line.relative_to(
+                        self.full_class.expanduser())
+                    ignore.write('\n')
+                    if not str(activity).startswith(day):
+                        day = str(activity.as_posix()).split("/")[0]
+                        ignore.write(f'\n# Class {day}\n\n')
+                    ignore.write(activity.as_posix())
+
+    def ignore_act(self, day=str, activity=str):
+        '''
+        Ignore individual activities
+        '''
+        with open(self.ignore_path.as_posix(), 'r') as ignore:
+            ignore_lines = ignore.readlines()
+        for line in range(len(ignore_lines)):
+            if '#' not in ignore_lines[line]:
+                if 'solved' in ignore_lines[line] and activity in ignore_lines[line]:
+                    ignore_lines[line] = "# " + ignore_lines[line]
+                    print(ignore_lines[line])
+                    try:
+                        if self.settings.push_style == 'One Activity' and 'Unsolved' in ignore_lines[line + 3]:
+                            ignore_lines[line + 3] = "# " + \
+                                ignore_lines[line + 3]
+                    except IndexError:
+                        print('IndexError')
+                        pass
+        with open(self.ignore_path.as_posix(), 'w') as ignore:
+            ignore.writelines(ignore_lines)
+        self.push_act(activity)
+
+    def push_act(self, activity=str):
+        var_name = ' '
+        if self.settings.commit_msg == "00-Lesson_name - Solved":
+            commit_msg = activity + " - Solved"
+
+        elif self.settings.commit_msg == "Lesson_name - Solved":
+            split = activity.split('-')[1].split('_')
+            commit_msg = var_name.join(split) + " - Solved"
+
+        elif self.settings.commit_msg == "00 - Solved":
+            split = activity.split('-')[0].split('_')
+            commit_msg = var_name.join(split) + " - Solved"
+        repo = Repo(self.settings.class_path.expanduser())
+        git = repo.git
+        ssh_cmd = 'ssh -i id_rsa'
+        with git.custom_environment(GIT_SSH_COMMAND=ssh_cmd):
+            git.pull()
+            git.add('-A')
+            git.commit('-m', commit_msg)
+            git.push('origin', 'master')
+
+
+class Settings:
+    '''
+    default(), write(parameter=str, value=str), dir_find(path=str, glob=str) threader()\n
+    Handles various settings functions including passing values as properties to other functions.
+
+    '''
+
+    def __init__(self):
+        self.settings_path = Path('settings.json').expanduser()
+        if self.settings_path.exists():
+            self.load_settings()
+        else:
+            self.default()
+
+    def load_settings(self):
+        self.settings = json.load(self.settings_path.open())
+        self.lesson_path = Path(self.settings['lessonPlans'])
+        self.class_path = Path(self.settings['classRepo'])
+        self.class_day = self.settings['classDay']
+        self.theme = self.settings['theme']
+        self.push_style = self.settings['pushStyle']
+        self.commit_msg = self.settings['commitMsg']
+
+    def default(self):
+        '''Runs search downstream of '~' for pattern matching lesson plans and class repos.'''
+        # paths = self.threader()
+
+        self.settings_path.touch()
+
+        default_set = {
+            'lessonPlans': 'None',
+            'classRepo': 'None',
+            'classDay': 'None',
+            'theme': 'light',
+            'pushStyle': 'One Activity',
+            'commitMsg': '00 - Solved'
+        }
+        self.settings_path.write_text(json.dumps(default_set))
+        self.load_settings()
+
+    def write(self, parameter=str, value=str):
+        '''writes new value to settings object and dumps (saves values) to settings.json'''
+        self.settings[parameter] = value
+        self.settings_path.write_text(json.dumps(self.settings))
+
+
+'''
+    # This Section is for the search function, replaced by the directory selector windows but still cool =)
+
+    def dir_find(self, path, glob):
+        dir_list = Path(path).rglob('*/' + glob)
+        return [x for x in dir_list]
+
+    def threader(self):
+        with ProcessPoolExecutor() as executor:
+            master_threads = []
+            class_threads = []
+            masks = ['Photos', 'AppData', 'Pictures', 'Videos', 'Music',
+                     'Contacts', 'Calendar', 'Searches', '3D Objects', 'bin', 'config', 'Cookies', 'Start Menu', 'Recent']
+            starts = ['.', '_', 'ntuser', 'NTUSER']
+            for path in Path().home().iterdir():
+                if not any(path.name == mask for mask in masks) or not any(path.name.startswith(start) for start in starts) or not path.is_symlink():
+                    class_threads.append(executor.submit(
+                        self.dir_find, str(path), "*Attendance Policy*.pdf"))
+                    master_threads.append(executor.submit(
+                        self.dir_find, str(path), "*1-Lesson-Plans"))
+            futures = zip(as_completed(master_threads),
+                          as_completed(class_threads))
+            for master_future, class_future in futures:
+                if len([x for x in master_future.result()]) > 0:
+                    try:
+                        master_class = {"lessonPlans": {str(x.parent.name): '~/' + str(
+                            x.parent.relative_to(Path().home()).as_posix()) for x in master_future.result()},
+                            "classRepos": {str(x.parent.parent.name): '~/' + str(
+                                x.parent.parent.relative_to(Path().home()).as_posix()) for x in class_future.result()}}
+                        return master_class
+                    except Exception as e:
+                        print(f"{e} raised")
+'''
 
 
 class Ui_MainWindow(object):
@@ -183,7 +387,6 @@ class Ui_MainWindow(object):
         self.action00_Lesson_name_Solved.setCheckable(True)
         self.action00_Lesson_name_Solved.setObjectName(
             "action00_Lesson_name_Solved")
-        self.menu_File.addAction(self.action_Set_Lesson_Plans)
         self.menu_File.addAction(self.action_Set_Class_Repo)
         self.menu_Weekly_Setup_Format.addAction(self.actionOne_Activity)
         self.menu_Weekly_Setup_Format.addAction(self.actionAll_Unsolved)
@@ -235,11 +438,11 @@ class Ui_MainWindow(object):
         self.action_Set_Lesson_Plans.setText(
             _translate("MainWindow", "Set Lesson Plans"))
         self.action_Set_Lesson_Plans.setStatusTip(_translate(
-            "MainWindow", "Set a location for the master lesson plans"))
+            "MainWindow", ""))
         self.action_Set_Class_Repo.setText(
-            _translate("MainWindow", "Set Class Repo"))
+            _translate("MainWindow", "Set Directories"))
         self.action_Set_Class_Repo.setStatusTip(_translate(
-            "MainWindow", "Set a location for the class repository"))
+            "MainWindow", "Set a new set of root directories"))
         self.action_Dark_Mode.setText(_translate("MainWindow", "&Dark Mode"))
         self.actionOne_Activity.setText(
             _translate("MainWindow", "One Activity"))

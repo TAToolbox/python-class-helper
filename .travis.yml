@@ -1,0 +1,11 @@
+language: python
+python:
+  - "3.7"
+before_install:
+  - sudo apt-get -y install python3-pip python-dev
+  - sudo pip install -U setuptools
+install:
+  - pip install -r requirements.txt
+# script:
+#  - run.sh
+# can you even test this?

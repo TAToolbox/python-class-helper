@@ -1,31 +1,24 @@
-from PyQt5 import QtWidgets, uic
-import utils
-import sys
-import subprocess
-from pathlib import Path
-from os.path import expanduser
-import os
-from PyQt5.QtGui import QKeySequence, QPalette, QColor, QStandardItem, QStandardItemModel, QIcon
-from PyQt5.QtCore import Qt, pyqtSlot, QSize, QDir
-import json
-import shutil
-import pprint
 import ctypes
+import os
+import pprint
+import sys
+from os.path import expanduser
+from pathlib import Path, PurePosixPath
 
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import QDir, QSize, Qt, pyqtSlot
+from PyQt5.QtGui import (QColor, QIcon, QKeySequence, QPalette, QStandardItem,
+                         QStandardItemModel)
 
-myappid = u'Class Helper'  # arbitrary string
-if os.name == 'nt':
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-else:
-    pass
+from utils import Settings, Setup, Ui_MainWindow, Dialog
 
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super(Window, self).__init__()
-        self.ui = utils.Ui_MainWindow()
+        self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.settings = utils.Settings()
+        self.settings = Settings()
         self.load_settings = self.settings.settings
         self.load_settings
 
@@ -35,12 +28,7 @@ class Window(QtWidgets.QMainWindow):
         for lesson in lessons_dirs:
             self.ui.lessonList.addItem(lesson.stem)
         self.ui.activityList.les_dirs = lessons_dirs
-
-        if self.settings.settings['lessonPlans'] is not 'None':
-            self.ui.action_Set_Lesson_Plans.setChecked(True)
-
-        if self.settings.settings['classRepo'] is not 'None':
-            self.ui.action_Set_Class_Repo.setChecked(True)
+        self.show()
 
         self.class_repo = Path(
             self.settings.class_path, self.settings.class_day).expanduser()
@@ -85,9 +73,12 @@ class Window(QtWidgets.QMainWindow):
 
         self.ui.setup_group.triggered.connect(self.setup_style)
 
-        self.show()
+        self.ui.action_Set_Class_Repo.triggered.connect(self.select_dirs)
+        # self.ui.action_Set_Class_Repo.triggered.connect(print('test'))
 
-        self.ui.action_Set_Class_Repo.triggered.connect(print('test'))
+    def select_dirs(self):
+        dirSelectWindow()
+        daySelect()
 
     def radioClicked(self):
         '''
@@ -249,7 +240,7 @@ class dirSelectWindow(QtWidgets.QWidget):
         self.top = 400
         self.width = 640
         self.height = 480
-        self.settings = utils.Settings()
+        self.settings = Settings()
         self.settings.settings
         self.setupUI()
 
@@ -257,6 +248,7 @@ class dirSelectWindow(QtWidgets.QWidget):
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.openFileNameDialog(title="Lesson Plans", repo='lessonPlans')
         self.openFileNameDialog(title="Class Repo", repo='classRepo')
+        daySelect()
 
     def openFileNameDialog(self, title=str, repo=str):
         options = QtWidgets.QFileDialog.Options()
@@ -273,11 +265,10 @@ class dirSelectWindow(QtWidgets.QWidget):
 class daySelect(QtWidgets.QDialog):
     def __init__(self):
         super(daySelect, self).__init__()
-        self.ui = utils.Dialog()
+        self.ui = Dialog()
         self.ui.setupUi(self)
-        self.settings = utils.Settings()
+        self.settings = Settings()
         self.class_repo = self.settings.class_path
-
         repo_children = [str(x.name)
                          for x in self.class_repo.expanduser().iterdir()]
         for item in repo_children:
@@ -293,14 +284,16 @@ class daySelect(QtWidgets.QDialog):
 
 
 if __name__ == "__main__":
+    myappid = u'Class Helper'
+    if sys.platform == 'win32':
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
     app_icon = QIcon()
-    app_icon.addFile('class-helper/img/toolbox.png', QSize(32, 32))
+    app_icon.addFile('img/toolbox.png', QSize(32, 32))
     app.setWindowIcon(app_icon)
-    if not Path('class-helper/settings.json').exists():
-        second_window = dirSelectWindow()
-        day_select = daySelect()
+    if not Path('settings.json').exists():
+        dirSelectWindow()
 
     win = Window()
 
