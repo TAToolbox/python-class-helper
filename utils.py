@@ -207,6 +207,8 @@ class Settings:
 
 
 class Ui_MainWindow(object):
+    '''UI settings for the main application window'''
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(640, 325)
@@ -457,6 +459,8 @@ class Ui_MainWindow(object):
 
 
 class Dialog(object):
+    '''UI settings for the class day select window'''
+
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(430, 110)
