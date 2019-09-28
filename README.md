@@ -29,7 +29,7 @@ These correspond to the day of the lesson (subdirectory) you want to work with. 
 
 ## Using Class Helper
 
-Select a lesson from the lesson, day, and activity and then click the `Push Activity` button in the lower right. _WARNING_: As of 2019/09/27 this button is connected to the git commands. It will attempt to comment, pull, commit, and push to your selected class repository. To deactivate this, comment out lines 117-124 in `utils.py`. If you want to test functionality, replace with `print(commit_msg)` to print the _would be_ commit message.
+Select a lesson from the lesson, day, and activity and then click the `Push Activity` button in the lower right. **_WARNING_**: As of 2019/09/27 this button is connected to the git commands. It will attempt to comment, pull, commit, and push to your selected class repository. To deactivate this, comment out lines 117-124 in `utils.py`. If you want to test functionality, replace with `print(commit_msg)` to print the _would be_ commit message.
 
 ## Settings
 
