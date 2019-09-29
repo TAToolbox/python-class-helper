@@ -149,9 +149,10 @@ class Window(QtWidgets.QMainWindow):
 
     def pushActivity(self):
         '''
-        Currently does nothing
+        Ignores Activity and pushes
         '''
         self.radioClicked()
+        self.settings.load_settings()
         lesson = self.ui.lessonList.currentText()
         print(lesson)
         day = self.ui.activityList.cur_day

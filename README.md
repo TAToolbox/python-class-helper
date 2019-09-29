@@ -1,5 +1,9 @@
 # Class Helper
 
+<!-- [![Build Status](https://img.shields.io/appveyor/ci/Ouroboros-analytics/python-class-helper?logo=appveyor&style=flat-square)](https://ci.appveyor.com/project/Ouroboros-analytics/python-class-helper) -->
+
+[![License](https://img.shields.io/github/license/TAToolbox/python-class-helper?style=flat-square)](https://github.com/TAToolbox/python-class-helper/blob/master/LICENSE)
+
 ## Setup
 
 To 'install' Class Helper, navigate to the repository and run `sh setup.sh`. This will install the requirements and setup the virtual environment. When it completes, you won't need to run the setup script again. Run `sh run.sh`, to activate the virtual environment and start the application.

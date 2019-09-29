@@ -8,11 +8,93 @@ from git import Repo
 # from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
+class Settings:
+    '''
+    default(), write(parameter=str, value=str), dir_find(path=str, glob=str) threader()\n
+    Handles various settings functions including passing values as properties to other functions.
+
+    '''
+
+    def __init__(self):
+        self.settings_path = Path('settings.json').expanduser()
+        if self.settings_path.exists():
+            self.load_settings()
+        else:
+            self.default()
+
+    def load_settings(self):
+        self.settings = json.load(self.settings_path.open())
+        self.lesson_path = Path(self.settings['lessonPlans'])
+        self.class_path = Path(self.settings['classRepo'])
+        self.class_day = self.settings['classDay']
+        self.theme = self.settings['theme']
+        self.push_style = self.settings['pushStyle']
+        self.commit_msg = self.settings['commitMsg']
+
+    def default(self):
+        '''Runs search downstream of '~' for pattern matching lesson plans and class repos.'''
+        # paths = self.threader()
+
+        self.settings_path.touch()
+
+        default_set = {
+            'lessonPlans': 'None',
+            'classRepo': 'None',
+            'classDay': 'None',
+            'theme': 'light',
+            'pushStyle': 'One Activity',
+            'commitMsg': '00 - Solved'
+        }
+        self.settings_path.write_text(json.dumps(default_set))
+        self.load_settings()
+
+    def write(self, parameter=str, value=str):
+        '''writes new value to settings object and dumps (saves values) to settings.json'''
+        self.settings[parameter] = value
+        self.settings_path.write_text(json.dumps(self.settings))
+
+
+'''
+    # This Section is for the search function, replaced by the directory selector windows but still cool =)
+
+    def dir_find(self, path, glob):
+        dir_list = Path(path).rglob('*/' + glob)
+        return [x for x in dir_list]
+
+    def threader(self):
+        with ProcessPoolExecutor() as executor:
+            master_threads = []
+            class_threads = []
+            masks = ['Photos', 'AppData', 'Pictures', 'Videos', 'Music',
+                     'Contacts', 'Calendar', 'Searches', '3D Objects', 'bin', 'config', 'Cookies', 'Start Menu', 'Recent']
+            starts = ['.', '_', 'ntuser', 'NTUSER']
+            for path in Path().home().iterdir():
+                if not any(path.name == mask for mask in masks) or not any(path.name.startswith(start) for start in starts) or not path.is_symlink():
+                    class_threads.append(executor.submit(
+                        self.dir_find, str(path), "*Attendance Policy*.pdf"))
+                    master_threads.append(executor.submit(
+                        self.dir_find, str(path), "*1-Lesson-Plans"))
+            futures = zip(as_completed(master_threads),
+                          as_completed(class_threads))
+            for master_future, class_future in futures:
+                if len([x for x in master_future.result()]) > 0:
+                    try:
+                        master_class = {"lessonPlans": {str(x.parent.name): '~/' + str(
+                            x.parent.relative_to(Path().home()).as_posix()) for x in master_future.result()},
+                            "classRepos": {str(x.parent.parent.name): '~/' + str(
+                                x.parent.parent.relative_to(Path().home()).as_posix()) for x in class_future.result()}}
+                        return master_class
+                    except Exception as e:
+                        print(f"{e} raised")
+'''
+
+
 class Setup:
     '''Copies lesson from lesson plans to class repo, sets up weekly gitignore and activity commit/push'''
 
     def __init__(self, lesson=str):
         self.settings = Settings()
+        self.settings.load_settings()
         self.lesson = lesson
 
         self.full_lesson = self.settings.lesson_path / '01-Lesson-Plans' / self.lesson
@@ -121,89 +203,8 @@ class Setup:
             git.pull()
             git.add('-A')
             git.commit('-m', commit_msg)
-            git.push('origin', 'master')
+            #git.push('origin', 'master')
             ''' @Todo: tie logger into data text for Window()'''
-
-
-class Settings:
-    '''
-    default(), write(parameter=str, value=str), dir_find(path=str, glob=str) threader()\n
-    Handles various settings functions including passing values as properties to other functions.
-
-    '''
-
-    def __init__(self):
-        self.settings_path = Path('settings.json').expanduser()
-        if self.settings_path.exists():
-            self.load_settings()
-        else:
-            self.default()
-
-    def load_settings(self):
-        self.settings = json.load(self.settings_path.open())
-        self.lesson_path = Path(self.settings['lessonPlans'])
-        self.class_path = Path(self.settings['classRepo'])
-        self.class_day = self.settings['classDay']
-        self.theme = self.settings['theme']
-        self.push_style = self.settings['pushStyle']
-        self.commit_msg = self.settings['commitMsg']
-
-    def default(self):
-        '''Runs search downstream of '~' for pattern matching lesson plans and class repos.'''
-        # paths = self.threader()
-
-        self.settings_path.touch()
-
-        default_set = {
-            'lessonPlans': 'None',
-            'classRepo': 'None',
-            'classDay': 'None',
-            'theme': 'light',
-            'pushStyle': 'One Activity',
-            'commitMsg': '00 - Solved'
-        }
-        self.settings_path.write_text(json.dumps(default_set))
-        self.load_settings()
-
-    def write(self, parameter=str, value=str):
-        '''writes new value to settings object and dumps (saves values) to settings.json'''
-        self.settings[parameter] = value
-        self.settings_path.write_text(json.dumps(self.settings))
-
-
-'''
-    # This Section is for the search function, replaced by the directory selector windows but still cool =)
-
-    def dir_find(self, path, glob):
-        dir_list = Path(path).rglob('*/' + glob)
-        return [x for x in dir_list]
-
-    def threader(self):
-        with ProcessPoolExecutor() as executor:
-            master_threads = []
-            class_threads = []
-            masks = ['Photos', 'AppData', 'Pictures', 'Videos', 'Music',
-                     'Contacts', 'Calendar', 'Searches', '3D Objects', 'bin', 'config', 'Cookies', 'Start Menu', 'Recent']
-            starts = ['.', '_', 'ntuser', 'NTUSER']
-            for path in Path().home().iterdir():
-                if not any(path.name == mask for mask in masks) or not any(path.name.startswith(start) for start in starts) or not path.is_symlink():
-                    class_threads.append(executor.submit(
-                        self.dir_find, str(path), "*Attendance Policy*.pdf"))
-                    master_threads.append(executor.submit(
-                        self.dir_find, str(path), "*1-Lesson-Plans"))
-            futures = zip(as_completed(master_threads),
-                          as_completed(class_threads))
-            for master_future, class_future in futures:
-                if len([x for x in master_future.result()]) > 0:
-                    try:
-                        master_class = {"lessonPlans": {str(x.parent.name): '~/' + str(
-                            x.parent.relative_to(Path().home()).as_posix()) for x in master_future.result()},
-                            "classRepos": {str(x.parent.parent.name): '~/' + str(
-                                x.parent.parent.relative_to(Path().home()).as_posix()) for x in class_future.result()}}
-                        return master_class
-                    except Exception as e:
-                        print(f"{e} raised")
-'''
 
 
 class Ui_MainWindow(object):
