@@ -3,6 +3,7 @@ from pathlib import Path, PurePosixPath
 from shutil import copytree, ignore_patterns
 import json
 import subprocess
+import git
 from git import Repo
 # import threading
 # from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -172,7 +173,7 @@ class Setup:
             if '#' not in ignore_lines[line]:
                 if 'solved' in ignore_lines[line] and activity in ignore_lines[line]:
                     ignore_lines[line] = "# " + ignore_lines[line]
-                    print(ignore_lines[line])
+                    # print(f"Ignoring: {ignore_lines[line]}")
                     try:
                         if self.settings.push_style == 'One Activity' and 'Unsolved' in ignore_lines[line + 3]:
                             ignore_lines[line + 3] = "# " + \
@@ -186,24 +187,29 @@ class Setup:
 
     def push_act(self, activity=str):
         var_name = ' '
+        print(self.settings.commit_msg)
+        print(type(self.settings.commit_msg))
         if self.settings.commit_msg == "00-Lesson_name - Solved":
-            commit_msg = activity + " - Solved"
+            self.commit_msg = activity + " - Solved"
+            print("1")
 
         elif self.settings.commit_msg == "Lesson_name - Solved":
             split = activity.split('-')[1].split('_')
-            commit_msg = var_name.join(split) + " - Solved"
-
+            self.commit_msg = var_name.join(split) + " - Solved"
+            print("2")
         elif self.settings.commit_msg == "00 - Solved":
             split = activity.split('-')[0].split('_')
-            commit_msg = var_name.join(split) + " - Solved"
+            self.commit_msg = var_name.join(split) + " - Solved"
+            print("3")
         repo = Repo(self.settings.class_path.expanduser())
         git = repo.git
         ssh_cmd = 'ssh -i id_rsa'
         with git.custom_environment(GIT_SSH_COMMAND=ssh_cmd):
-            git.pull()
-            git.add('-A')
-            git.commit('-m', commit_msg)
-            #git.push('origin', 'master')
+            # print(f"Commit Message: {self.commit_msg}")
+            # git.pull()
+            # git.add('-A')
+            # git.commit('-m', commit_msg)
+            # git.push('origin', 'master')
             ''' @Todo: tie logger into data text for Window()'''
 
 
@@ -232,6 +238,21 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName("gridLayout")
+        self.addLesson = QtWidgets.QPushButton(self.centralwidget)
+        self.addLesson.setEnabled(False)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.addLesson.sizePolicy().hasHeightForWidth())
+        self.addLesson.setSizePolicy(sizePolicy)
+        self.addLesson.setMinimumSize(QtCore.QSize(0, 0))
+        self.addLesson.setObjectName("addLesson")
+        self.gridLayout.addWidget(self.addLesson, 10, 10, 1, 1)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout.addItem(spacerItem, 4, 2, 1, 1)
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -244,17 +265,32 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.label_2, 0, 0, 2, 1)
         self.activitiesDone = QtWidgets.QListView(self.centralwidget)
         self.activitiesDone.setObjectName("activitiesDone")
-        self.gridLayout.addWidget(self.activitiesDone, 1, 6, 8, 3)
-        self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setObjectName("label_3")
-        self.gridLayout.addWidget(self.label_3, 0, 6, 1, 3)
+        self.gridLayout.addWidget(self.activitiesDone, 1, 8, 8, 4)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout.addItem(spacerItem1, 7, 12, 1, 1)
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
         self.label_5.setObjectName("label_5")
-        self.gridLayout.addWidget(self.label_5, 0, 2, 1, 1)
+        self.gridLayout.addWidget(self.label_5, 0, 4, 1, 1)
+        self.label_3 = QtWidgets.QLabel(self.centralwidget)
+        self.label_3.setObjectName("label_3")
+        self.gridLayout.addWidget(self.label_3, 0, 8, 1, 4)
         self.lessonProgress = QtWidgets.QProgressBar(self.centralwidget)
         self.lessonProgress.setProperty("value", 0)
         self.lessonProgress.setObjectName("lessonProgress")
-        self.gridLayout.addWidget(self.lessonProgress, 10, 0, 1, 7)
+        self.gridLayout.addWidget(self.lessonProgress, 10, 0, 1, 9)
+        self.activityList = QtWidgets.QComboBox(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.activityList.sizePolicy().hasHeightForWidth())
+        self.activityList.setSizePolicy(sizePolicy)
+        self.activityList.setMinimumSize(QtCore.QSize(275, 30))
+        self.activityList.setMaximumSize(QtCore.QSize(600, 30))
+        self.activityList.setObjectName("activityList")
+        self.gridLayout.addWidget(self.activityList, 6, 0, 1, 1)
         self.pushActivity = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -264,38 +300,13 @@ class Ui_MainWindow(object):
             self.pushActivity.sizePolicy().hasHeightForWidth())
         self.pushActivity.setSizePolicy(sizePolicy)
         self.pushActivity.setObjectName("pushActivity")
-        self.gridLayout.addWidget(self.pushActivity, 10, 8, 1, 1)
-        self.activityList = QtWidgets.QComboBox(self.centralwidget)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.activityList.sizePolicy().hasHeightForWidth())
-        self.activityList.setSizePolicy(sizePolicy)
-        self.activityList.setMinimumSize(QtCore.QSize(300, 30))
-        self.activityList.setMaximumSize(QtCore.QSize(600, 30))
-        self.activityList.setObjectName("activityList")
-        self.gridLayout.addWidget(self.activityList, 6, 0, 1, 1)
-        spacerItem = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem, 7, 9, 1, 1)
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.label.sizePolicy().hasHeightForWidth())
-        self.label.setSizePolicy(sizePolicy)
-        self.label.setObjectName("label")
-        self.gridLayout.addWidget(self.label, 5, 0, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem1, 10, 7, 1, 1)
+        self.gridLayout.addWidget(self.pushActivity, 10, 11, 1, 1)
         spacerItem2 = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem2, 10, 9, 1, 1)
+        spacerItem3 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout.addItem(spacerItem3, 10, 12, 1, 1)
         self.label_4 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -306,6 +317,42 @@ class Ui_MainWindow(object):
         self.label_4.setSizePolicy(sizePolicy)
         self.label_4.setObjectName("label_4")
         self.gridLayout.addWidget(self.label_4, 9, 0, 1, 1)
+        self.label = QtWidgets.QLabel(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.label.sizePolicy().hasHeightForWidth())
+        self.label.setSizePolicy(sizePolicy)
+        self.label.setObjectName("label")
+        self.gridLayout.addWidget(self.label, 5, 0, 1, 1)
+        spacerItem4 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout.addItem(spacerItem4, 5, 6, 1, 1)
+        self.radioButton_2 = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButton_2.setObjectName("radioButton_2")
+        self.buttonGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.buttonGroup.setObjectName("buttonGroup")
+        self.buttonGroup.addButton(self.radioButton_2)
+        self.gridLayout.addWidget(self.radioButton_2, 4, 4, 1, 1)
+        self.radioButton = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButton.setObjectName("radioButton")
+        self.buttonGroup.addButton(self.radioButton)
+        self.gridLayout.addWidget(self.radioButton, 4, 3, 1, 1)
+        spacerItem5 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout.addItem(spacerItem5, 4, 6, 1, 1)
+        spacerItem6 = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
+        self.gridLayout.addItem(spacerItem6, 7, 0, 1, 1)
+        spacerItem7 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout.addItem(spacerItem7, 10, 13, 1, 1)
+        self.radioButton_3 = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButton_3.setObjectName("radioButton_3")
+        self.buttonGroup.addButton(self.radioButton_3)
+        self.gridLayout.addWidget(self.radioButton_3, 4, 5, 1, 1)
         self.lessonList = QtWidgets.QComboBox(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
@@ -314,40 +361,10 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(
             self.lessonList.sizePolicy().hasHeightForWidth())
         self.lessonList.setSizePolicy(sizePolicy)
-        self.lessonList.setMinimumSize(QtCore.QSize(300, 30))
+        self.lessonList.setMinimumSize(QtCore.QSize(250, 30))
         self.lessonList.setMaximumSize(QtCore.QSize(600, 30))
         self.lessonList.setObjectName("lessonList")
         self.gridLayout.addWidget(self.lessonList, 4, 0, 1, 1)
-        spacerItem3 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem3, 5, 2, 1, 1)
-        spacerItem4 = QtWidgets.QSpacerItem(
-            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.gridLayout.addItem(spacerItem4, 7, 0, 1, 1)
-        self.radioButton_2 = QtWidgets.QRadioButton(self.centralwidget)
-        self.radioButton_2.setObjectName("radioButton_2")
-        self.gridLayout.addWidget(self.radioButton_2, 4, 2, 1, 1)
-        spacerItem5 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem5, 4, 4, 1, 1)
-        spacerItem6 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem6, 5, 1, 1, 1)
-        spacerItem7 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem7, 5, 4, 1, 1)
-        self.radioButton = QtWidgets.QRadioButton(self.centralwidget)
-        self.radioButton.setObjectName("radioButton")
-        self.gridLayout.addWidget(self.radioButton, 4, 1, 1, 1)
-        spacerItem8 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem8, 5, 3, 1, 1)
-        self.radioButton_3 = QtWidgets.QRadioButton(self.centralwidget)
-        self.radioButton_3.setObjectName("radioButton_3")
-        self.gridLayout.addWidget(self.radioButton_3, 4, 3, 1, 1)
-        spacerItem9 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem9, 10, 10, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 640, 21))
@@ -360,8 +377,9 @@ class Ui_MainWindow(object):
         self.setup_group = QtWidgets.QActionGroup(
             self.menu_Weekly_Setup_Format)
         self.menu_Weekly_Setup_Format.setGeometry(
-            QtCore.QRect(1134, 195, 135, 90))
-        self.menu_Weekly_Setup_Format.setObjectName("menu_Weekly_Setup_Format")
+            QtCore.QRect(1134, 195, 135, 94))
+        self.menu_Weekly_Setup_Format.setObjectName(
+            "menu_Weekly_Setup_Format")
         self.menu_Commit_Msg = QtWidgets.QMenu(self.menu_Settings)
         self.menu_Commit_Msg.setObjectName("menu_Commit_Msg")
         MainWindow.setMenuBar(self.menubar)
@@ -369,8 +387,11 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.action_Set_Lesson_Plans = QtWidgets.QAction(MainWindow)
-        self.action_Set_Lesson_Plans.setObjectName("action_Set_Lesson_Plans")
+        self.action_Set_Lesson_Plans.setCheckable(False)
+        self.action_Set_Lesson_Plans.setObjectName(
+            "action_Set_Lesson_Plans")
         self.action_Set_Class_Repo = QtWidgets.QAction(MainWindow)
+        self.action_Set_Class_Repo.setCheckable(True)
         self.action_Set_Class_Repo.setObjectName("action_Set_Class_Repo")
         self.action_Dark_Mode = QtWidgets.QAction(MainWindow)
         self.action_Dark_Mode.setCheckable(True)
@@ -383,7 +404,8 @@ class Ui_MainWindow(object):
         self.actionAll_Unsolved.setObjectName("actionAll_Unsolved")
         self.actionLesson_Name_Solved = QtWidgets.QAction(MainWindow)
         self.actionLesson_Name_Solved.setCheckable(True)
-        self.actionLesson_Name_Solved.setObjectName("actionLesson_Name_Solved")
+        self.actionLesson_Name_Solved.setObjectName(
+            "actionLesson_Name_Solved")
         self.action00_Solved = QtWidgets.QAction(MainWindow)
         self.action00_Solved.setCheckable(True)
         self.action00_Solved.setObjectName("action00_Solved")
@@ -391,7 +413,7 @@ class Ui_MainWindow(object):
         self.action00_Lesson_name_Solved.setCheckable(True)
         self.action00_Lesson_name_Solved.setObjectName(
             "action00_Lesson_name_Solved")
-        self.menu_File.addAction(self.action_Set_Class_Repo)
+        self.menu_File.addAction(self.action_Set_Lesson_Plans)
         self.menu_Weekly_Setup_Format.addAction(self.actionOne_Activity)
         self.menu_Weekly_Setup_Format.addAction(self.actionAll_Unsolved)
         self.setup_group.addAction(self.actionOne_Activity)
@@ -425,12 +447,13 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate(
             "MainWindow", "TA Toolbox - Class Helper"))
+        self.addLesson.setText(_translate("MainWindow", "Add Lesson"))
         self.label_2.setText(_translate("MainWindow", "Lesson:"))
-        self.label_3.setText(_translate("MainWindow", "Pushed Activities:"))
         self.label_5.setText(_translate("MainWindow", "Day:"))
+        self.label_3.setText(_translate("MainWindow", "Pushed Activities:"))
         self.pushActivity.setText(_translate("MainWindow", "Push Activity"))
-        self.label.setText(_translate("MainWindow", "Activity:"))
         self.label_4.setText(_translate("MainWindow", "Lesson Progress:"))
+        self.label.setText(_translate("MainWindow", "Activity:"))
         self.radioButton_2.setText(_translate("MainWindow", "2"))
         self.radioButton.setText(_translate("MainWindow", "1"))
         self.radioButton_3.setText(_translate("MainWindow", "3"))
@@ -440,13 +463,13 @@ class Ui_MainWindow(object):
             _translate("MainWindow", "&Push Style"))
         self.menu_Commit_Msg.setTitle(_translate("MainWindow", "&Commit Msg"))
         self.action_Set_Lesson_Plans.setText(
-            _translate("MainWindow", "Set Lesson Plans"))
-        self.action_Set_Lesson_Plans.setStatusTip(_translate(
-            "MainWindow", ""))
-        self.action_Set_Class_Repo.setText(
             _translate("MainWindow", "Set Directories"))
+        self.action_Set_Lesson_Plans.setStatusTip(
+            _translate("MainWindow", "Set new root directories"))
+        self.action_Set_Class_Repo.setText(
+            _translate("MainWindow", "Set Class Repo"))
         self.action_Set_Class_Repo.setStatusTip(_translate(
-            "MainWindow", "Set a new set of root directories"))
+            "MainWindow", "Set a location for the class repository"))
         self.action_Dark_Mode.setText(_translate("MainWindow", "&Dark Mode"))
         self.actionOne_Activity.setText(
             _translate("MainWindow", "One Activity"))

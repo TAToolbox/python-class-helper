@@ -133,9 +133,9 @@ class Window(QtWidgets.QMainWindow):
                     if line.startswith(cur_day) and line.endswith('Solved'):
                         line_count += 1
                     if line.startswith('#' + cur_day) and line.endswith('Solved'):
+                        act_count += 1
                         act = line.split('/')[2]
                         model.appendRow(QStandardItem(act))
-                        act_count += 1
             try:
                 progress = act_count/line_count * 100
             except ZeroDivisionError:
@@ -154,11 +154,9 @@ class Window(QtWidgets.QMainWindow):
         self.radioClicked()
         self.settings.load_settings()
         lesson = self.ui.lessonList.currentText()
-        print(lesson)
         day = self.ui.activityList.cur_day
-        print(day)
         setup = Setup(lesson)
-        setup.ignore_act(day, self.ui.activityList.currentText())
+        setup.ignore_act(str(day), str(self.ui.activityList.currentText()))
         QtWidgets.qApp.processEvents()
         self.ui.lessonProgress.update()
 
@@ -169,6 +167,9 @@ class Window(QtWidgets.QMainWindow):
         error.setWindowTitle('Error')
         error.setIcon(QtWidgets.QMessageBox.Critical)
         error.exec_()
+
+    def add_to_class(self):
+        pass
 
     def commit_msg(self):
         '''Sets commit message value in settings'''
