@@ -299,7 +299,7 @@ if __name__ == "__main__":
     app_icon = QIcon()
     app_icon.addFile('img/toolbox.png', QSize(32, 32))
     app.setWindowIcon(app_icon)
-    if not Path('settings.json').exists():
+    if not Path('settings.cfg').exists():
         dirSelectWindow()
 
     win = Window()

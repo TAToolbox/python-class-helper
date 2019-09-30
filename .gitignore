@@ -2,8 +2,7 @@
 .vscode
 
 # Settings
-settings.json
-settings*.json
+settings*.*
 test.py
 
 # Byte-compiled / optimized / DLL files

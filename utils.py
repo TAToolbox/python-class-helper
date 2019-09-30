@@ -16,7 +16,7 @@ class Settings:
     '''
 
     def __init__(self):
-        self.settings_path = Path('settings.json').expanduser()
+        self.settings_path = Path('settings.cfg').expanduser()
         if self.settings_path.exists():
             self.load_settings()
         else:
