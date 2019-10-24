@@ -5,7 +5,7 @@ import sys
 from os.path import expanduser
 from pathlib import Path, PurePosixPath
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+
 from PyQt5.QtCore import QDir, QSize, Qt, pyqtSlot
 from PyQt5.QtGui import (QColor, QIcon, QKeySequence, QPalette, QStandardItem,
                          QStandardItemModel)
@@ -137,7 +137,7 @@ class Window(QtWidgets.QMainWindow):
                         act = line.split('/')[2]
                         model.appendRow(QStandardItem(act))
             try:
-                progress = act_count/line_count * 100
+                progress = act_count / line_count * 100
             except ZeroDivisionError:
                 progress = 100
             self.ui.lessonProgress.setValue(progress)
@@ -264,7 +264,7 @@ class dirSelectWindow(QtWidgets.QWidget):
         dirName = QtWidgets.QFileDialog.getExistingDirectory(
             self, f'Select {title}', options=options)
         if dirName:
-            self.settings.write(repo, '~/'+Path(
+            self.settings.write(repo, '~/' + Path(
                 dirName).relative_to(Path().home()).as_posix())
         if repo == 'classRepo':
             self.class_path = Path(dirName).expanduser()
